@@ -96,7 +96,15 @@ class ServerComms(object):
 	def __init__(self, hostname, port):
 		self.ServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.ServerSocket.connect((hostname, port))
-	
+
+	def readTolength(self, length):
+		messageData = self.ServerSocket.recv(length)
+		while len(messageData) < length:
+			buffData = self.ServerSocket.recv(length - len(messageData))
+			if buffData:
+				messageData += buffData
+		return messageData
+
 	def readMessage(self):
 		'''
 		Read a message from the server
@@ -110,7 +118,7 @@ class ServerComms(object):
 			messageData = bytearray()
 			messagePayload = {'messageType': messageType}
 		else:
-			messageData = self.ServerSocket.recv(messageLen)
+			messageData = self.readTolength(messageLen)
 			logging.debug("*** {}".format(messageData))
 			messagePayload = json.loads(messageData.decode('utf-8'))
 			messagePayload['messageType'] = messageType
@@ -152,7 +160,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--debug', action='store_true', help='Enable debug output')
 parser.add_argument('-H', '--hostname', default='127.0.0.1', help='Hostname to connect to')
 parser.add_argument('-p', '--port', default=8052, type=int, help='Port to connect to')
-parser.add_argument('-n', '--name', default='RandomBot', help='Name of bot')
+parser.add_argument('-n', '--name', default='TeamA:RandomBot', help='Name of bot')
 args = parser.parse_args()
 
 # Set up console logging
